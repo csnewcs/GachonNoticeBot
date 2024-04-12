@@ -37,7 +37,7 @@ func makeSlashCommands(client *discordgo.Session) {
 		},
 	}
 	for _, command := range commands {
-		client.ApplicationCommandCreate(client.State.User.ID, "557874265765052436", command)
+		client.ApplicationCommandCreate(client.State.User.ID, "", command)
 	}
 }
 

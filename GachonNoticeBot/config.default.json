@@ -1,0 +1,11 @@
+{
+    "token":"Your Discord Bot Token",
+    "sendMessageChannels": {
+        "all":[],
+        "cloudEnginerring":[]
+    },
+    "lastNotice": {
+        "all": 0,
+        "cloudEnginerring": 0
+    }
+}
