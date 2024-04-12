@@ -13,17 +13,20 @@ import (
 
 // var noticeURL string = "https://www.gachon.ac.kr/kor/7986/subview.do"
 // var cloudEnginerringNoticeURL string = "https://www.gachon.ac.kr/ce/9514/subview.do"
-var lastNumbers int = 0
+var lastNumbers = map[NoticePage]int{
+	NoticePageAll:              0,
+	NoticePageCloudEnginerring: 0,
+}
 var noticeURLList = map[NoticePage]string{
-	NoticePageAll:   "https://www.gachon.ac.kr/kor/7986/subview.do",
+	NoticePageAll:              "https://www.gachon.ac.kr/kor/7986/subview.do",
 	NoticePageCloudEnginerring: "https://www.gachon.ac.kr/ce/9514/subview.do",
 }
 
-type NoticePage int
+type NoticePage string
 
 const (
-	NoticePageAll NoticePage = iota
-	NoticePageCloudEnginerring NoticePage = iota
+	NoticePageAll              NoticePage = "all"
+	NoticePageCloudEnginerring NoticePage = "cloudEnginerring"
 )
 
 // 콘텐츠 위치: HTML > body > div.(sub _responsiveObj sub) > div.wrap-contents > div.container > div.contents > div.scroll-table > table.(board-table horizon), tbody
@@ -33,14 +36,14 @@ const (
 // 위 링크에서 '96372'를 {숫자}라 할 때 fnct1|@@|%2FcommonNotice%2Fkor%2F{숫자}%2FartclView.do%3Fpage%3D1%26srchColumn%3D%26srchWord%3D%26 이걸 base64로 인코딩 한 다음 https://www.gachon.ac.kr/kor/7986/subview.do?enc={인코딩} 하면 해당 페이지로 이동
 
 type Notice struct {
-	Number      string
+	Number      int
 	Title       string
 	Link        string
 	ContentLink string
 	Auther      string
 	Date        string
 	Views       string
-	FileLinks   []string
+	File        string
 }
 
 func GetNoticeList(noticePage NoticePage) []Notice {
@@ -65,39 +68,66 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 	tbody := table.Find("tbody")
 	tbody.Find("tr").Each(func(i int, sel *goquery.Selection) {
 		// voidText := string(sel.Find("td.td-write").Text()[0])
-		link, contentLink := GetNoticeLinks[NoticePageAll](sel)
+		link, contentLink := GetNoticeLinks[noticePage](sel)
+		num, _ := strconv.Atoi(removeVoidText(sel.Find("td.td-num").Text()))
+		// fmt.Println(num)
 		notice := Notice{
-			Number:      sel.Find("td.td-num").Text(),
+			Number:      num,
 			Link:        link,
 			ContentLink: contentLink,
 			Title:       sel.Find("strong").Text(),
 			Auther:      removeVoidText(sel.Find("td.td-write").Text()),
 			Date:        sel.Find("td.td-date").Text(),
 			Views:       removeVoidText(sel.Find("td.td-access").Text()),
+			File:        sel.Find("td.td-file").Text(),
 		}
 		notices = append(notices, notice)
-		fmt.Println(notice)
 	})
 	return notices
 }
 
 func removeVoidText(text string) string {
-	voidTexts := []string{string(10), string(9), string(32)}
+	voidTexts := []string{string(rune(10)), string(rune(9)), string(rune(32))}
 	for _, voidText := range voidTexts {
 		text = strings.ReplaceAll(text, voidText, "")
 	}
 	return text
 }
 
+// func getDescription(link string) string {
+// 	resp, err := http.Get(link)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer resp.Body.Close()
+// 	html, _ := goquery.NewDocumentFromReader(resp.Body)
+// 	content := html.Find("div.view-con")
+// 	fmt.Println(content.Text())
+// 	turn := ""
+// 	content.Find("span").Each(func(i int, sel *goquery.Selection) {
+// 		turn += sel.Text() + "\n"
+// 	})
+// 	return turn
+// }
+
 var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, string){
 	NoticePageAll: func(selection *goquery.Selection) (string, string) {
-		number, _ := strconv.Atoi(strings.Split(selection.AttrOr("href", ""), "'")[3])
+		aInfo := selection.Find("a").AttrOr("href", "")
+		number, _ := strconv.Atoi(strings.Split(aInfo, "'")[3])
 		textToEncode := fmt.Sprintf("fnct1|@@|%%2FcommonNotice%%2Fkor%%2F%d%%2FartclView.do%%3Fpage%%3D1%%26srchColumn%%3D%%26srchWord%%3D%%26", number)
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
-		return "https://www.gachon.ac.kr/kor/7986/subview.do?enc=" + encoded, fmt.Sprintf("https://www.gachon.ac.kr/commonNotice/kor/%d/artclView.do", number)
+		return noticeURLList[NoticePageAll] + "?enc=" + encoded, fmt.Sprintf("https://www.gachon.ac.kr/commonNotice/kor/%d/artclView.do", number)
 	},
 	NoticePageCloudEnginerring: func(selection *goquery.Selection) (string, string) {
-		
-		return "", ""	
+		aInfo := selection.Find("a").AttrOr("href", "")          // /bbs/ce/1496/96327/artclView.do
+		onclickInfo := selection.Find("a").AttrOr("onclick", "") // jf_viewArtcl('ce', '1496', '96327')
+		numbers := strings.Split(onclickInfo, "'")
+		departmentNumber := numbers[3]
+		articleNumber := numbers[5]
+		//fnct1|@@|%2Fbbs%2Fce%2F1496%2F96327%2FartclView.do%3Fpage%3D1%26srchColumn%3D%26srchWrd%3D%26bbsClSeq%3D%26bbsOpenWrdSeq%3D%26rgsBgndeStr%3D%26rgsEnddeStr%3D%26isViewMine%3Dfalse%26password%3D%26
+		//fnct1|@@|%2Fbbs%2Fce%2F부서번호%2F게시글번호%2FartclView.do%3F7
+		textToEncode := fmt.Sprintf("fnct1|@@|/bbs/ce/%s/%s/artclView.do?page=1&srchColumn=&srchWrd=&bbsClSeq=&bbsOpenWrdSeq=&rgsBgndeStr=&rgsEnddeStr=&isViewMine=false&password=&", departmentNumber, articleNumber)
+		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
+		return noticeURLList[NoticePageCloudEnginerring] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo
 	},
 }
