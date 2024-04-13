@@ -15,18 +15,18 @@ import (
 // var cloudEnginerringNoticeURL string = "https://www.gachon.ac.kr/ce/9514/subview.do"
 var lastNumbers = map[NoticePage]int{
 	NoticePageAll:              0,
-	NoticePageCloudEnginerring: 0,
+	NoticePageCloudEngineering: 0,
 }
 var noticeURLList = map[NoticePage]string{
 	NoticePageAll:              "https://www.gachon.ac.kr/kor/7986/subview.do",
-	NoticePageCloudEnginerring: "https://www.gachon.ac.kr/ce/9514/subview.do",
+	NoticePageCloudEngineering: "https://www.gachon.ac.kr/ce/9514/subview.do",
 }
 
 type NoticePage string
 
 const (
 	NoticePageAll              NoticePage = "all"
-	NoticePageCloudEnginerring NoticePage = "cloudEnginerring"
+	NoticePageCloudEngineering NoticePage = "cloudEnginerring"
 )
 
 // 콘텐츠 위치: HTML > body > div.(sub _responsiveObj sub) > div.wrap-contents > div.container > div.contents > div.scroll-table > table.(board-table horizon), tbody
@@ -118,7 +118,7 @@ var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, 
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
 		return noticeURLList[NoticePageAll] + "?enc=" + encoded, fmt.Sprintf("https://www.gachon.ac.kr/commonNotice/kor/%d/artclView.do", number)
 	},
-	NoticePageCloudEnginerring: func(selection *goquery.Selection) (string, string) {
+	NoticePageCloudEngineering: func(selection *goquery.Selection) (string, string) {
 		aInfo := selection.Find("a").AttrOr("href", "")          // /bbs/ce/1496/96327/artclView.do
 		onclickInfo := selection.Find("a").AttrOr("onclick", "") // jf_viewArtcl('ce', '1496', '96327')
 		numbers := strings.Split(onclickInfo, "'")
@@ -128,6 +128,6 @@ var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, 
 		//fnct1|@@|%2Fbbs%2Fce%2F부서번호%2F게시글번호%2FartclView.do%3F7
 		textToEncode := fmt.Sprintf("fnct1|@@|/bbs/ce/%s/%s/artclView.do?page=1&srchColumn=&srchWrd=&bbsClSeq=&bbsOpenWrdSeq=&rgsBgndeStr=&rgsEnddeStr=&isViewMine=false&password=&", departmentNumber, articleNumber)
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
-		return noticeURLList[NoticePageCloudEnginerring] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo
+		return noticeURLList[NoticePageCloudEngineering] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo
 	},
 }

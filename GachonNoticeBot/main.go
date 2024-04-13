@@ -15,16 +15,18 @@ import (
 
 type SendConfig struct {
 	All              []string `json:"all"`
-	CloudEnginerring []string `json:"cloudEnginerring"`
+	CloudEngineering []string `json:"cloudEnginerring"`
 }
 type LastNotice struct {
 	All              int `json:"all"`
-	CloudEnginerring int `json:"cloudEnginerring"`
+	CloudEngineering int `json:"cloudEngineering"`
 }
 type Config struct {
 	Token               string     `json:"token"`
 	SendMessageChannels SendConfig `json:"sendMessageChannels"`
 	LastNotice          LastNotice `json:"lastNotice"`
+	IsTesting           bool       `json:"isTesting"`
+	TestingGuilds       []string   `json:"testingGuilds"`
 }
 
 var conf Config
@@ -44,9 +46,13 @@ func main() {
 		fmt.Println("Error creating Discord session: ", err)
 		return
 	}
+
+	if conf.IsTesting {
+		fmt.Println("Starting with testing mode...")
+	}
 	// session.AddHandler(guildCreate)
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-		fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name)
+		if conf.IsTesting {fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name)}
 
 		if function, ok := slashCommandsExecuted[interaction.ApplicationCommandData().Name]; ok {
 			function(session, interaction)
@@ -59,7 +65,7 @@ func main() {
 	}
 	makeSlashCommands(session)
 	lastNumbers[NoticePageAll] = conf.LastNotice.All
-	lastNumbers[NoticePageCloudEnginerring] = conf.LastNotice.CloudEnginerring
+	lastNumbers[NoticePageCloudEngineering] = conf.LastNotice.CloudEngineering
 	go loopCheckingNewNotices(60)
 	fmt.Println("Bot is now running. Press CTRL+C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -108,10 +114,10 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 	switch noticePage {
 	case NoticePageAll:
 		channels = conf.SendMessageChannels.All
-		conf.LastNotice.All = notice.Number
-	case NoticePageCloudEnginerring:
-		channels = conf.SendMessageChannels.CloudEnginerring
-		conf.LastNotice.CloudEnginerring = notice.Number
+		lastNumbers[NoticePageAll] = notice.Number
+	case NoticePageCloudEngineering:
+		channels = conf.SendMessageChannels.CloudEngineering
+		lastNumbers[NoticePageCloudEngineering] = notice.Number
 	}
 	saveConfig()
 	for _, channel := range channels {
@@ -133,6 +139,9 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 }
 
 func saveConfig() {
+	conf.LastNotice.All = lastNumbers[NoticePageAll]
+	conf.LastNotice.CloudEngineering = lastNumbers[NoticePageCloudEngineering]
+
 	file, err := os.Create("config.json")
 	if err != nil {
 		fmt.Println("Error opening config file: ", err)

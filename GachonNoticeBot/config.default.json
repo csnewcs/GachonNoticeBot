@@ -1,8 +1,10 @@
 {
     "token":"Your Discord Bot Token",
+    "isTesting": false,
+    "testingGuilds": [],
     "sendMessageChannels": {
         "all":[],
-        "cloudEnginerring":[]
+        "cloudEngineering":[]
     },
     "lastNotice": {
         "all": 0,
