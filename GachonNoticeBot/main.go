@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	// "github.com/clinet/discordgo-embed"
 )
 
 type SendMessageChannel struct {

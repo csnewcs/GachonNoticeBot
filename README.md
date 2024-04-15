@@ -8,7 +8,6 @@
 ## 사용 패키지
 - go 1.21.8
 - discordgo 0.28.1
-- discordgo-embed 0.0.0-20220113222025-bafe0c917646
 - goquery 1.9.1
 ---
 ## config.json
