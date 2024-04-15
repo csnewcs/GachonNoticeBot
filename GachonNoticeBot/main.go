@@ -13,9 +13,9 @@ import (
 	// "github.com/clinet/discordgo-embed"
 )
 
-type SendConfig struct {
+type SendMessageChannel struct {
 	All              []string `json:"all"`
-	CloudEngineering []string `json:"cloudEnginerring"`
+	CloudEngineering []string `json:"cloudEngineering"`
 }
 type LastNotice struct {
 	All              int `json:"all"`
@@ -23,7 +23,7 @@ type LastNotice struct {
 }
 type Config struct {
 	Token               string     `json:"token"`
-	SendMessageChannels SendConfig `json:"sendMessageChannels"`
+	SendMessageChannels SendMessageChannel `json:"sendMessageChannels"`
 	LastNotice          LastNotice `json:"lastNotice"`
 	IsTesting           bool       `json:"isTesting"`
 	TestingGuilds       []string   `json:"testingGuilds"`
@@ -34,8 +34,8 @@ var session *discordgo.Session
 
 func main() {
 	var err error
-	fmt.Println("Starting bot...")
-	conf, err = getConfigFile()
+	fmt.Println("Starting bot...") 
+	conf, err = getConfig()
 	if err != nil {
 		fmt.Println("Error getting config file: ", err)
 		return
@@ -50,13 +50,13 @@ func main() {
 	if conf.IsTesting {
 		fmt.Println("Starting with testing mode...")
 	}
-	// session.AddHandler(guildCreate)
+	
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-		if conf.IsTesting {fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name)}
+		if conf.IsTesting {fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name, "|", interaction.GuildID)}
 
 		if function, ok := slashCommandsExecuted[interaction.ApplicationCommandData().Name]; ok {
 			function(session, interaction)
-		}
+		} // 해당 인터렉션이 있을 때 그에 맞는 함수 실행(./slashCommand.go)
 	})
 	err = session.Open()
 	if err != nil {
@@ -68,15 +68,16 @@ func main() {
 	lastNumbers[NoticePageCloudEngineering] = conf.LastNotice.CloudEngineering
 	go loopCheckingNewNotices(60)
 	fmt.Println("Bot is now running. Press CTRL+C to exit.")
+	
+	// 프로그램 종료
 	sc := make(chan os.Signal, 1)
-
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	fmt.Println("\nbye")
 	session.Close()
 }
 
-func getConfigFile() (Config, error) {
+func getConfig() (Config, error) {
 	//config file path: ./config.json
 	file, err := os.Open("config.json")
 	if err != nil {
@@ -93,14 +94,14 @@ func getConfigFile() (Config, error) {
 	return jsonConfig, nil
 }
 
-func loopCheckingNewNotices(delay int) {
+func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확인
 	for {
 		for noticePage, lastNumber := range lastNumbers {
 			notices := GetNoticeList(noticePage)
 			for _, notice := range notices {
 				if notice.Number > lastNumber {
 					fmt.Println("새로운 공지: ", notice.Number)
-					sendNotice(notice, noticePage)
+					go sendNotice(notice, noticePage)
 					lastNumbers[noticePage] = notice.Number
 					break
 				}
