@@ -51,6 +51,7 @@ func main() {
 		fmt.Println("Starting with testing mode...")
 	}
 	
+	
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 		if conf.IsTesting {fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name, "|", interaction.GuildID)}
 

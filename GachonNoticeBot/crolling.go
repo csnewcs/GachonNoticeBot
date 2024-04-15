@@ -121,6 +121,7 @@ var getNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, 
 		departmentNumber := numbers[3]
 		articleNumber := numbers[5]
 		
+		
 		textToEncode := fmt.Sprintf("fnct1|@@|/bbs/ce/%s/%s/artclView.do?page=1&srchColumn=&srchWrd=&bbsClSeq=&bbsOpenWrdSeq=&rgsBgndeStr=&rgsEnddeStr=&isViewMine=false&password=&", departmentNumber, articleNumber)
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
 		return noticeURLList[NoticePageCloudEngineering] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo
