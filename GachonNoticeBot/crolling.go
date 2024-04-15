@@ -11,8 +11,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// var noticeURL string = "https://www.gachon.ac.kr/kor/7986/subview.do"
-// var cloudEnginerringNoticeURL string = "https://www.gachon.ac.kr/ce/9514/subview.do"
 var lastNumbers = map[NoticePage]int{
 	NoticePageAll:              0,
 	NoticePageCloudEngineering: 0,
@@ -67,10 +65,8 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 	table := html.Find("table.board-table")
 	tbody := table.Find("tbody")
 	tbody.Find("tr").Each(func(i int, sel *goquery.Selection) {
-		// voidText := string(sel.Find("td.td-write").Text()[0])
 		link, contentLink := GetNoticeLinks[noticePage](sel)
 		num, _ := strconv.Atoi(removeVoidText(sel.Find("td.td-num").Text()))
-		// fmt.Println(num)
 		notice := Notice{
 			Number:      num,
 			Link:        link,
@@ -110,7 +106,7 @@ func removeVoidText(text string) string {
 // 	return turn
 // }
 
-var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, string){
+var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, string){ // 학교공지와 학과공지 페이지가 살짝 달라 구분
 	NoticePageAll: func(selection *goquery.Selection) (string, string) {
 		aInfo := selection.Find("a").AttrOr("href", "")
 		number, _ := strconv.Atoi(strings.Split(aInfo, "'")[3])
@@ -124,8 +120,7 @@ var GetNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, 
 		numbers := strings.Split(onclickInfo, "'")
 		departmentNumber := numbers[3]
 		articleNumber := numbers[5]
-		//fnct1|@@|%2Fbbs%2Fce%2F1496%2F96327%2FartclView.do%3Fpage%3D1%26srchColumn%3D%26srchWrd%3D%26bbsClSeq%3D%26bbsOpenWrdSeq%3D%26rgsBgndeStr%3D%26rgsEnddeStr%3D%26isViewMine%3Dfalse%26password%3D%26
-		//fnct1|@@|%2Fbbs%2Fce%2F부서번호%2F게시글번호%2FartclView.do%3F7
+		
 		textToEncode := fmt.Sprintf("fnct1|@@|/bbs/ce/%s/%s/artclView.do?page=1&srchColumn=&srchWrd=&bbsClSeq=&bbsOpenWrdSeq=&rgsBgndeStr=&rgsEnddeStr=&isViewMine=false&password=&", departmentNumber, articleNumber)
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
 		return noticeURLList[NoticePageCloudEngineering] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo
