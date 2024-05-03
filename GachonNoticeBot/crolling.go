@@ -75,7 +75,7 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 			Auther:      removeVoidText(sel.Find("td.td-write").Text()),
 			Date:        sel.Find("td.td-date").Text(),
 			Views:       removeVoidText(sel.Find("td.td-access").Text()),
-			File:        sel.Find("td.td-file").Text(),
+			File:        removeVoidText(sel.Find("td.td-file").Text()),
 		}
 		notices = append(notices, notice)
 	})

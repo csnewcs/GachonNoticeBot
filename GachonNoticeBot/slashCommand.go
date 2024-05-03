@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -35,14 +36,35 @@ func makeSlashCommands(client *discordgo.Session) {
 			Description: "이 채널을 공지를 가져오지 않도록 설정합니다.(서버 관리 역할 필요)",
 		},
 	}
+	var oldCommands []*discordgo.ApplicationCommand;
+	if conf.IsTesting {
+		for _, guildID := range conf.TestingGuilds {
+			oldCommands, _ = client.ApplicationCommands(client.State.User.ID, guildID)
+			removeCommands(oldCommands, client)
+		}
+	}
+	
+	oldCommands, _ = client.ApplicationCommands(client.State.User.ID, "")
+	removeCommands(oldCommands, client)
+
 	for _, command := range commands {
 		if conf.IsTesting {
-			fmt.Println("Created Command: ", command.Name)
 			for _, guildID := range conf.TestingGuilds {
 				client.ApplicationCommandCreate(client.State.User.ID, guildID, command)
 			}
+			testLog("Created Command: " + command.Name)
 		} else {
 			client.ApplicationCommandCreate(client.State.User.ID, "", command)
+		}
+	}
+}
+
+func removeCommands(commands []*discordgo.ApplicationCommand, client *discordgo.Session) {
+	for _, command := range commands {
+		err := client.ApplicationCommandDelete(client.State.User.ID, command.GuildID, command.ID)
+		testLog("Remove Command: " + command.Name + " | " + command.ID)
+		if err != nil {
+			fmt.Println(err.Error())
 		}
 	}
 }
@@ -60,6 +82,7 @@ var slashCommandsExecuted = map[string]func(client *discordgo.Session, interacti
 		}
 		content := ""
 		noticePage := NoticePage(interactionCreated.ApplicationCommandData().Options[0].StringValue())
+		fmt.Println(noticePage)
 		channelID := interactionCreated.ChannelID
 		if noticePage == NoticePageAll {
 			if contains(&conf.SendMessageChannels.All, channelID) {
@@ -85,9 +108,7 @@ var slashCommandsExecuted = map[string]func(client *discordgo.Session, interacti
 		})
 	},
 	"해제": func(client *discordgo.Session, interactionCreated *discordgo.InteractionCreate) {
-		if(conf.IsTesting) {
-			fmt.Println("해제 | ", interactionCreated.ChannelID)
-		}
+		testLog("해제 | " + interactionCreated.ChannelID)
 		if interactionCreated.Member.Permissions&discordgo.PermissionManageServer == 0 && interactionCreated.GuildID == interactionCreated.User.ID {
 			client.InteractionRespond(interactionCreated.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -101,17 +122,13 @@ var slashCommandsExecuted = map[string]func(client *discordgo.Session, interacti
 		channelID := interactionCreated.ChannelID
 
 		index := indexOf(conf.SendMessageChannels.All, channelID)
-		if(conf.IsTesting) {
-			fmt.Println("해제 | indexOfAll: ", index)
-		}
+		testLog("해제 | indexOfAll: " + strconv.Itoa(index))
 		if index != -1 {
 			conf.SendMessageChannels.All = append(conf.SendMessageChannels.All[:index], conf.SendMessageChannels.All[index+1:]...)
 			content += fmt.Sprintf("해당 채널에 `%s` 공지가 오지 않도록 설정했습니다\n", NoticePageAll)
 		}
 		index = indexOf(conf.SendMessageChannels.CloudEngineering, channelID)
-		if(conf.IsTesting) {
-			fmt.Println("해제 | indexOfCloudEngineering: ", index)
-		}
+		testLog("해제 | indexOfCloudEngineering: " + strconv.Itoa(index))
 		if index != -1 {
 			conf.SendMessageChannels.CloudEngineering = append(conf.SendMessageChannels.CloudEngineering[:index], conf.SendMessageChannels.CloudEngineering[index+1:]...)
 			content += fmt.Sprintf("해당 채널에 `%s` 공지가 오지 않도록 설정했습니다\n", NoticePageCloudEngineering)
@@ -143,3 +160,4 @@ func contains(slices *[]string, element string) bool {
 	}
 	return false
 }
+

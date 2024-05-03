@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -46,14 +47,11 @@ func main() {
 		return
 	}
 
-	if conf.IsTesting {
-		fmt.Println("Starting with testing mode...")
-	}
+	testLog("Starting with testing mode...")
 	
 	
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-		if conf.IsTesting {fmt.Println("인터렉션 받음: ", interaction.ApplicationCommandData().Name, "|", interaction.GuildID)}
-
+		testLog("인터렉션 받음: " + interaction.ApplicationCommandData().Name + "(" + interaction.ApplicationCommandData().ID + ") | " + interaction.GuildID)
 		if function, ok := slashCommandsExecuted[interaction.ApplicationCommandData().Name]; ok {
 			function(session, interaction)
 		} // 해당 인터렉션이 있을 때 그에 맞는 함수 실행(./slashCommand.go)
@@ -98,12 +96,12 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 	for {
 		for noticePage, lastNumber := range lastNumbers {
 			notices := GetNoticeList(noticePage)
-			for _, notice := range notices {
+			for i, _ := range notices {
+				notice := notices[len(notices) - i - 1]
 				if notice.Number > lastNumber {
-					fmt.Println("새로운 공지: ", notice.Number)
-					go sendNotice(notice, noticePage)
+					testLog("새로운 공지: " + strconv.Itoa(notice.Number) + " | " + notice.Title + " | " + notice.Auther + " | " + notice.Date + " | " + notice.Views + " | " + notice.File)
+					sendNotice(notice, noticePage)
 					lastNumbers[noticePage] = notice.Number
-					break
 				}
 			}
 		}
@@ -115,11 +113,10 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 	switch noticePage {
 	case NoticePageAll:
 		channels = conf.SendMessageChannels.All
-		lastNumbers[NoticePageAll] = notice.Number
 	case NoticePageCloudEngineering:
 		channels = conf.SendMessageChannels.CloudEngineering
-		lastNumbers[NoticePageCloudEngineering] = notice.Number
 	}
+	lastNumbers[noticePage] = notice.Number
 	saveConfig()
 	for _, channel := range channels {
 		fileExist := ""
@@ -135,7 +132,7 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 			},
 			// Description: getDescription(notice.ContentLink),
 		}
-		session.ChannelMessageSendEmbed(channel, &embed)
+		go session.ChannelMessageSendEmbed(channel, &embed)
 	}
 }
 
@@ -156,4 +153,10 @@ func saveConfig() {
 	}
 	file.Write(jsonData)
 	defer file.Close()
+}
+
+func testLog(message string) {
+	if conf.IsTesting {
+		fmt.Println(message)
+	}
 }
