@@ -96,7 +96,7 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 	for {
 		for noticePage, lastNumber := range lastNumbers {
 			notices := GetNoticeList(noticePage)
-			for i, _ := range notices {
+			for i := range notices {
 				notice := notices[len(notices) - i - 1]
 				if notice.Number > lastNumber {
 					testLog("새로운 공지: " + strconv.Itoa(notice.Number) + " | " + notice.Title + " | " + notice.Auther + " | " + notice.Date + " | " + notice.Views + " | " + notice.File)
@@ -105,6 +105,7 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 				}
 			}
 		}
+		saveConfig()
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 }
@@ -116,8 +117,7 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 	case NoticePageCloudEngineering:
 		channels = conf.SendMessageChannels.CloudEngineering
 	}
-	lastNumbers[noticePage] = notice.Number
-	saveConfig()
+	// lastNumbers[noticePage] = notice.Number
 	for _, channel := range channels {
 		fileExist := ""
 		if notice.File != "0" {
