@@ -95,6 +95,7 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 	for {
 		for noticePage, lastNumber := range lastNumbers {
 			notices := GetNoticeList(noticePage)
+			checkedLastNumber := false
 			for i := range notices {
 				notice := notices[len(notices) - i - 1]
 				if notice.Number > lastNumber {
@@ -106,9 +107,12 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 					} else {
 						testLog("새로운 공지 아님 이전 번호 탐색")
 						lastNumber--
+						checkedLastNumber = true
 						continue
 					}
-					lastNumbers[noticePage] = notice.Number
+					if !checkedLastNumber {
+						lastNumbers[noticePage] = notice.Number
+					}
 				}
 			}
 		}
