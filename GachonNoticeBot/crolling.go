@@ -10,6 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+type NoticePage string
 
 var lastNumbers = map[NoticePage]int{
 	NoticePageAll:              0,
@@ -19,8 +20,11 @@ var noticeURLList = map[NoticePage]string{
 	NoticePageAll:              "https://www.gachon.ac.kr/kor/7986/subview.do",
 	NoticePageCloudEngineering: "https://www.gachon.ac.kr/ce/9514/subview.do",
 }
+var sendedNotices = map[NoticePage][]string {
+	NoticePageAll: make([]string, 5),
+	NoticePageCloudEngineering: make([]string, 5),
+}
 
-type NoticePage string
 
 const (
 	NoticePageAll              NoticePage = "all"
@@ -82,6 +86,13 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 	return notices
 }
 
+func addToSendedNotices (title string, noticePage NoticePage) {
+	for i := 4; i > 0; i-- {
+		sendedNotices[noticePage][i] = sendedNotices[noticePage][i - 1];
+	}
+	sendedNotices[noticePage][0] = title
+}
+
 func removeVoidText(text string) string {
 	voidTexts := []string{string(rune(10)), string(rune(9)), string(rune(32))}
 	for _, voidText := range voidTexts {
@@ -89,22 +100,6 @@ func removeVoidText(text string) string {
 	}
 	return text
 }
-
-// func getDescription(link string) string {
-// 	resp, err := http.Get(link)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	defer resp.Body.Close()
-// 	html, _ := goquery.NewDocumentFromReader(resp.Body)
-// 	content := html.Find("div.view-con")
-// 	fmt.Println(content.Text())
-// 	turn := ""
-// 	content.Find("span").Each(func(i int, sel *goquery.Selection) {
-// 		turn += sel.Text() + "\n"
-// 	})
-// 	return turn
-// }
 
 var getNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, string){ // 학교공지와 학과공지 페이지가 살짝 달라 구분
 	NoticePageAll: func(selection *goquery.Selection) (string, string) {
@@ -120,8 +115,7 @@ var getNoticeLinks = map[NoticePage]func(selection *goquery.Selection) (string, 
 		numbers := strings.Split(onclickInfo, "'")
 		departmentNumber := numbers[3]
 		articleNumber := numbers[5]
-		
-		
+
 		textToEncode := fmt.Sprintf("fnct1|@@|/bbs/ce/%s/%s/artclView.do?page=1&srchColumn=&srchWrd=&bbsClSeq=&bbsOpenWrdSeq=&rgsBgndeStr=&rgsEnddeStr=&isViewMine=false&password=&", departmentNumber, articleNumber)
 		encoded := base64.StdEncoding.EncodeToString([]byte(textToEncode))
 		return noticeURLList[NoticePageCloudEngineering] + "?enc=" + encoded, "https://www.gachon.ac.kr/" + aInfo

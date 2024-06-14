@@ -12,7 +12,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 )
-
 type SendMessageChannel struct {
 	All              []string `json:"all"`
 	CloudEngineering []string `json:"cloudEngineering"`
@@ -100,7 +99,15 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 				notice := notices[len(notices) - i - 1]
 				if notice.Number > lastNumber {
 					testLog("새로운 공지: " + strconv.Itoa(notice.Number) + " | " + notice.Title + " | " + notice.Auther + " | " + notice.Date + " | " + notice.Views + " | " + notice.File)
-					sendNotice(notice, noticePage)
+					if isNewNotice(notice.Title, noticePage) {
+						sendNotice(notice, noticePage)
+						testLog("새로운 공지, 전송")
+						addToSendedNotices(notice.Title, noticePage)
+					} else {
+						testLog("새로운 공지 아님 이전 번호 탐색")
+						lastNumber--
+						continue
+					}
 					lastNumbers[noticePage] = notice.Number
 				}
 			}
@@ -108,6 +115,14 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 		saveConfig()
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
+}
+func isNewNotice(title string, noticePage NoticePage) bool {
+	for i := 0; i < 5; i++ {
+		if sendedNotices[noticePage][i] == title {
+			return false
+		}
+	}
+	return true
 }
 func sendNotice(notice Notice, noticePage NoticePage) {
 	var channels []string
