@@ -1,17 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
+
 type SendMessageChannel struct {
 	All              []string `json:"all"`
 	CloudEngineering []string `json:"cloudEngineering"`
@@ -21,11 +22,11 @@ type LastNotice struct {
 	CloudEngineering int `json:"cloudEngineering"`
 }
 type Config struct {
-	Token               string     `json:"token"`
+	Token               string             `json:"token"`
 	SendMessageChannels SendMessageChannel `json:"sendMessageChannels"`
-	LastNotice          LastNotice `json:"lastNotice"`
-	IsTesting           bool       `json:"isTesting"`
-	TestingGuilds       []string   `json:"testingGuilds"`
+	LastNotice          LastNotice         `json:"lastNotice"`
+	IsTesting           bool               `json:"isTesting"`
+	TestingGuilds       []string           `json:"testingGuilds"`
 }
 
 var conf Config
@@ -47,8 +48,7 @@ func main() {
 	}
 
 	testLog("Starting with testing mode...")
-	
-	
+
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 		testLog("인터렉션 받음: " + interaction.ApplicationCommandData().Name + "(" + interaction.ApplicationCommandData().ID + ") | " + interaction.GuildID)
 		if function, ok := slashCommandsExecuted[interaction.ApplicationCommandData().Name]; ok {
@@ -63,15 +63,31 @@ func main() {
 	makeSlashCommands(session)
 	lastNumbers[NoticePageAll] = conf.LastNotice.All
 	lastNumbers[NoticePageCloudEngineering] = conf.LastNotice.CloudEngineering
-	go loopCheckingNewNotices(60)
+	if conf.IsTesting {
+		go loopCheckingNewNotices(10)
+	} else {
+		go loopCheckingNewNotices(60)
+	}
 	fmt.Println("Bot is now running. Press CTRL+C to exit.")
-	
-	// 프로그램 종료
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
-	fmt.Println("\nbye")
-	session.Close()
+
+	// 프로그램 명령어
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		scanner.Scan()
+		var command string = scanner.Text()
+		if command == "exit" {
+			session.Close()
+			fmt.Println("\nbye")
+			return
+		}
+		commandArr := strings.Split(command, " ")
+		if commandFunc, ok := commands[commandArr[0]]; ok {
+			result := commandFunc(commandArr)
+			fmt.Println(result)
+		} else {
+			fmt.Println("Invalid command")
+		}
+	}
 }
 
 func getConfig() (Config, error) {
@@ -95,29 +111,33 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 	for {
 		for noticePage, lastNumber := range lastNumbers {
 			notices := GetNoticeList(noticePage)
-			checkedLastNumber := false
-			for i := range notices {
-				notice := notices[len(notices) - i - 1]
-				if notice.Number > lastNumber {
-					testLog("새로운 공지: " + strconv.Itoa(notice.Number) + " | " + notice.Title + " | " + notice.Auther + " | " + notice.Date + " | " + notice.Views + " | " + notice.File)
-					if isNewNotice(notice.Title, noticePage) {
-						sendNotice(notice, noticePage)
-						testLog("새로운 공지, 전송")
-						addToSendedNotices(notice.Title, noticePage)
-					} else {
-						testLog("새로운 공지 아님 이전 번호 탐색")
-						lastNumber--
-						checkedLastNumber = true
-						continue
-					}
-					if !checkedLastNumber {
-						lastNumbers[noticePage] = notice.Number
-					}
-				}
-			}
+			checkNewNotice(notices, noticePage, lastNumber, false)
 		}
 		saveConfig()
 		time.Sleep(time.Duration(delay) * time.Second)
+	}
+}
+func checkNewNotice(notices []Notice, noticePage NoticePage, lastNumber int, checkedLastNumber bool) {
+	for i := range notices {
+		notice := notices[len(notices)-i-1]
+		if notice.Number > lastNumber {
+			testLog("새로운 공지: " + strconv.Itoa(notice.Number) + " | " + notice.Title + " | " + notice.Auther + " | " + notice.Date + " | " + notice.Views + " | " + notice.File)
+			if !checkedLastNumber {
+				lastNumbers[noticePage] = notice.Number
+			}
+			if isNewNotice(notice.Title, noticePage) {
+				sendNotice(notice, noticePage)
+				testLog("새로운 공지, 전송")
+				addToSendedNotices(notice.Title, noticePage)
+				if checkedLastNumber {
+					return
+				}
+			} else {
+				testLog("새로운 공지 아님 이전 번호 탐색")
+				checkNewNotice(notices, noticePage, lastNumber - 1, true)
+				break
+			}
+		}
 	}
 }
 func isNewNotice(title string, noticePage NoticePage) bool {
