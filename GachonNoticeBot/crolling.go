@@ -10,6 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+
 type NoticePage string
 
 var lastNumbers = map[NoticePage]int{
@@ -20,11 +21,10 @@ var noticeURLList = map[NoticePage]string{
 	NoticePageAll:              "https://www.gachon.ac.kr/kor/7986/subview.do",
 	NoticePageCloudEngineering: "https://www.gachon.ac.kr/ce/9514/subview.do",
 }
-var sendedNotices = map[NoticePage][]string {
-	NoticePageAll: make([]string, 5),
-	NoticePageCloudEngineering: make([]string, 5),
+var sendedNotices = map[NoticePage][]string{
+	NoticePageAll:              make([]string, 50),
+	NoticePageCloudEngineering: make([]string, 50),
 }
-
 
 const (
 	NoticePageAll              NoticePage = "all"
@@ -86,9 +86,9 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 	return notices
 }
 
-func addToSendedNotices (title string, noticePage NoticePage) {
-	for i := 4; i > 0; i-- {
-		sendedNotices[noticePage][i] = sendedNotices[noticePage][i - 1];
+func addToSendedNotices(title string, noticePage NoticePage) {
+	for i := 49; i > 0; i-- {
+		sendedNotices[noticePage][i] = sendedNotices[noticePage][i-1]
 	}
 	sendedNotices[noticePage][0] = title
 }

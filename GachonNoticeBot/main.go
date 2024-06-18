@@ -33,7 +33,7 @@ var session *discordgo.Session
 
 func main() {
 	var err error
-	fmt.Println("Starting bot...") 
+	fmt.Println("Starting bot...")
 	conf, err = getConfig()
 	if err != nil {
 		fmt.Println("Error getting config file: ", err)
@@ -121,7 +121,7 @@ func loopCheckingNewNotices(delay int) { //주기적으로 새로운 공지 확�
 	}
 }
 func isNewNotice(title string, noticePage NoticePage) bool {
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 50; i++ {
 		if sendedNotices[noticePage][i] == title {
 			return false
 		}
@@ -136,7 +136,6 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 	case NoticePageCloudEngineering:
 		channels = conf.SendMessageChannels.CloudEngineering
 	}
-	// lastNumbers[noticePage] = notice.Number
 	for _, channel := range channels {
 		fileExist := ""
 		if notice.File != "0" {
@@ -149,7 +148,6 @@ func sendNotice(notice Notice, noticePage NoticePage) {
 			Footer: &discordgo.MessageEmbedFooter{
 				Text: notice.Date + " | " + notice.Auther + " " + fileExist,
 			},
-			// Description: getDescription(notice.ContentLink),
 		}
 		go session.ChannelMessageSendEmbed(channel, &embed)
 	}
