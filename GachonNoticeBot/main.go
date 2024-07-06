@@ -13,6 +13,20 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type NoticePage string
+
+const (
+	NoticePageAll              NoticePage = "all"
+	NoticePageCloudEngineering NoticePage = "cloudEngineering"
+)
+type Config struct {
+	Token               string             `json:"token"`
+	SendMessageChannels SendMessageChannel `json:"sendMessageChannels"`
+	LastNotice          LastNotice         `json:"lastNotice"`
+	IsTesting           bool               `json:"isTesting"`
+	TestingGuilds       []string           `json:"testingGuilds"`
+}
+
 type SendMessageChannel struct {
 	All              []string `json:"all"`
 	CloudEngineering []string `json:"cloudEngineering"`
@@ -20,13 +34,6 @@ type SendMessageChannel struct {
 type LastNotice struct {
 	All              int `json:"all"`
 	CloudEngineering int `json:"cloudEngineering"`
-}
-type Config struct {
-	Token               string             `json:"token"`
-	SendMessageChannels SendMessageChannel `json:"sendMessageChannels"`
-	LastNotice          LastNotice         `json:"lastNotice"`
-	IsTesting           bool               `json:"isTesting"`
-	TestingGuilds       []string           `json:"testingGuilds"`
 }
 
 var conf Config

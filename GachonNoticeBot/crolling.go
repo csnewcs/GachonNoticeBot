@@ -11,8 +11,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type NoticePage string
-
 var lastNumbers = map[NoticePage]int{
 	NoticePageAll:              0,
 	NoticePageCloudEngineering: 0,
@@ -25,11 +23,6 @@ var sendedNotices = map[NoticePage][]string{
 	NoticePageAll:              make([]string, 50),
 	NoticePageCloudEngineering: make([]string, 50),
 }
-
-const (
-	NoticePageAll              NoticePage = "all"
-	NoticePageCloudEngineering NoticePage = "cloudEngineering"
-)
 
 // 콘텐츠 위치: HTML > body > div.(sub _responsiveObj sub) > div.wrap-contents > div.container > div.contents > div.scroll-table > table.(board-table horizon), tbody
 // tr > td.td-num: 번호 / td.td-subject > a > strong: 제목 / td.td-write: 작성자 / td.td-date: 작성일 / td.td-access: 조회수 / td.td-file: 첨부파일

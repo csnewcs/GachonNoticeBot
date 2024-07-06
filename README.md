@@ -15,7 +15,7 @@ config.default.json의 이름을 config.json으로 변경해 사용하면 된다
 ```
 token: 디스코드 봇 토큰                                        string
 isTesting: 이 봇이 테스트 모드인지 여부                         bool
-testingGuilds: 테스트 모드이면 커맨드를 생성할 서버들 목록       string[]
+testingGuilds: 테스트 모드이면 커맨드를 생성할 서버들 목록       string[P]
 sendMessageChannels: 메세지를 보낼 디스코드 채널들              string[]
 lastNotice: 마지막 공지 번호들                                 int
 ```
@@ -24,17 +24,5 @@ lastNotice: 마지막 공지 번호들                                 int
 go mod download
 go run .
 ```
-## 구조
-- main.go
-  - main: 디스코드 봇 생성
-  - getConfig/saveConfig: 설정 파일 관리
-  - loopCheckingNewNotices: 새로운 공지 확인
-  - sendNotice: 공지 전송
-- crolling.go
-  - GetNoticeList: 학교 사이트에서 공지 가져오기
-    - parsingNoticeList: 학교 페이지에서 내용 뽑아내기
-      - removeVoidText: 공백 문자들(9, 10, 32) 삭제
-      - getNoticeLinks: 공지 페이지 링크 만들기
-- slashCommand.go
-  - makeSlashCommands: 슬래시 커맨드 생성
-  - slashCommandExecuted: 슬래시 커맨드 처리
+## 새 공지 페이지 만들기 가이드라인
+[여기](https://github.com/csnewcs/GachonNoticeBot/blob/main/CreateNewNoticeGuideLine.md)를 참조하세요
