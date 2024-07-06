@@ -53,7 +53,7 @@ main.go
     "추가할 NoticePage의 문자열": 0
 }
 ```
-1. SendMessageChannel과 LastNotice에 NoticePage에 맞게 각각 []string과 int로 추가
+3. SendMessageChannel과 LastNotice에 NoticePage에 맞게 각각 []string과 int로 추가
 ---
 crolling.go
 1. lastNumbers에 `추가한 NoticePage`: 0 추가
@@ -69,7 +69,7 @@ slashCommand.go
     Value: 추가한 NoticePage
 },
 ``` 
-1. slashCommandsExecuted["등록"]에서 `channalID := interactionCreated.ChannelID` 구문 아래 조건문에 다음 내용 추가
+2. slashCommandsExecuted["등록"]에서 `channalID := interactionCreated.ChannelID` 구문 아래 조건문에 다음 내용 추가
 ```go
 else if noticePage == <추가한 NoticePage> {
     if contains(&conf.SendMessageChannels.<추가한 NoticePage>, channelID) {
@@ -80,7 +80,7 @@ else if noticePage == <추가한 NoticePage> {
     }
 }
 ```
-1. slashCommandExecuted["해제"]에서 `saveConfig()` 위에 다음과 내용 추가
+3. slashCommandExecuted["해제"]에서 `saveConfig()` 위에 다음과 내용 추가
 ```go
 index = indexOf(conf.SendMessageChannels.<추가한 NoticePage>, channelID)
     testLog("해제 | indexOf<추가한 NoticePage>: " + strconv.Itoa(index))
