@@ -1,10 +1,12 @@
-package main
+package bot
 
 import (
 	"fmt"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	. "github.com/csnewcs/gachonnoticebot/config"
+	. "github.com/csnewcs/gachonnoticebot/crolling"
 )
 
 func makeSlashCommands(client *discordgo.Session) {
@@ -37,8 +39,8 @@ func makeSlashCommands(client *discordgo.Session) {
 		},
 	}
 	var oldCommands []*discordgo.ApplicationCommand;
-	if conf.IsTesting {
-		for _, guildID := range conf.TestingGuilds {
+	if Conf.IsTesting {
+		for _, guildID := range Conf.TestingGuilds {
 			oldCommands, _ = client.ApplicationCommands(client.State.User.ID, guildID)
 			removeCommands(oldCommands, client)
 		}
@@ -48,8 +50,8 @@ func makeSlashCommands(client *discordgo.Session) {
 	removeCommands(oldCommands, client)
 
 	for _, command := range commands {
-		if conf.IsTesting {
-			for _, guildID := range conf.TestingGuilds {
+		if Conf.IsTesting {
+			for _, guildID := range Conf.TestingGuilds {
 				client.ApplicationCommandCreate(client.State.User.ID, guildID, command)
 			}
 			testLog("Created Command: " + command.Name)
@@ -85,21 +87,21 @@ var slashCommandsExecuted = map[string]func(client *discordgo.Session, interacti
 		fmt.Println(noticePage)
 		channelID := interactionCreated.ChannelID
 		if noticePage == NoticePageAll {
-			if contains(&conf.SendMessageChannels.All, channelID) {
+			if contains(&Conf.SendMessageChannels.All, channelID) {
 				content = "이미 등록되어 있습니다"
 			} else {
-				conf.SendMessageChannels.All = append(conf.SendMessageChannels.All, channelID)
+				Conf.SendMessageChannels.All = append(Conf.SendMessageChannels.All, channelID)
 				content = fmt.Sprintf("해당 채널을 `%s` 공지를 가져올 채널로 등록했습니다.", noticePage)
 			}
 		} else if noticePage == NoticePageCloudEngineering {
-			if contains(&conf.SendMessageChannels.CloudEngineering, channelID) {
+			if contains(&Conf.SendMessageChannels.CloudEngineering, channelID) {
 				content = "이미 등록되어 있습니다"
 			} else {
-				conf.SendMessageChannels.CloudEngineering = append(conf.SendMessageChannels.CloudEngineering, channelID)
+				Conf.SendMessageChannels.CloudEngineering = append(Conf.SendMessageChannels.CloudEngineering, channelID)
 				content = fmt.Sprintf("해당 채널을 `%s` 공지를 가져올 채널로 등록했습니다.", noticePage)
 			}
 		}
-		saveConfig()
+		SaveConfig()
 		client.InteractionRespond(interactionCreated.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -121,19 +123,19 @@ var slashCommandsExecuted = map[string]func(client *discordgo.Session, interacti
 		content := ""
 		channelID := interactionCreated.ChannelID
 
-		index := indexOf(conf.SendMessageChannels.All, channelID)
+		index := indexOf(Conf.SendMessageChannels.All, channelID)
 		testLog("해제 | indexOfAll: " + strconv.Itoa(index))
 		if index != -1 {
-			conf.SendMessageChannels.All = append(conf.SendMessageChannels.All[:index], conf.SendMessageChannels.All[index+1:]...)
+			Conf.SendMessageChannels.All = append(Conf.SendMessageChannels.All[:index], Conf.SendMessageChannels.All[index+1:]...)
 			content += fmt.Sprintf("해당 채널에 `%s` 공지가 오지 않도록 설정했습니다\n", NoticePageAll)
 		}
-		index = indexOf(conf.SendMessageChannels.CloudEngineering, channelID)
+		index = indexOf(Conf.SendMessageChannels.CloudEngineering, channelID)
 		testLog("해제 | indexOfCloudEngineering: " + strconv.Itoa(index))
 		if index != -1 {
-			conf.SendMessageChannels.CloudEngineering = append(conf.SendMessageChannels.CloudEngineering[:index], conf.SendMessageChannels.CloudEngineering[index+1:]...)
+			Conf.SendMessageChannels.CloudEngineering = append(Conf.SendMessageChannels.CloudEngineering[:index], Conf.SendMessageChannels.CloudEngineering[index+1:]...)
 			content += fmt.Sprintf("해당 채널에 `%s` 공지가 오지 않도록 설정했습니다\n", NoticePageCloudEngineering)
 		}
-		saveConfig()
+		SaveConfig()
 		client.InteractionRespond(interactionCreated.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
