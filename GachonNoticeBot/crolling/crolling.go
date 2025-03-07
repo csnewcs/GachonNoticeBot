@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
-
 
 // 콘텐츠 위치: HTML > body > div.(sub _responsiveObj sub) > div.wrap-contents > div.container > div.contents > div.scroll-table > table.(board-table horizon), tbody
 // tr > td.td-num: 번호 / td.td-subject > a > strong: 제목 / td.td-write: 작성자 / td.td-date: 작성일 / td.td-access: 조회수 / td.td-file: 첨부파일
@@ -35,7 +35,11 @@ func GetNoticeList(noticePage NoticePage) []Notice {
 	// Request
 	resp, err := http.Get(NoticeURLList[noticePage])
 	if err != nil {
-		panic(err)
+		// panic(err)
+		now := time.Now()
+		fmt.Printf("[%d-%d-%d %d:%d:%d] ERR: HTTP GET FAILED\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+		resp.Body.Close()
+		return make([]Notice, 0)
 	}
 	defer resp.Body.Close()
 

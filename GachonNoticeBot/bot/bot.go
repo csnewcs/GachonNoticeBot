@@ -12,14 +12,17 @@ import (
 var session *discordgo.Session
 
 func Init() error {
-	var err error = nil
-	session, err = discordgo.New("Bot " + Conf.Token)
+	session, _ = discordgo.New("Bot " + Conf.Token)
 	session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+		if interaction.Type != discordgo.InteractionApplicationCommand {
+			return
+		}
 		testLog("인터렉션 받음: " + interaction.ApplicationCommandData().Name + "(" + interaction.ApplicationCommandData().ID + ") | " + interaction.GuildID)
 		if function, ok := slashCommandsExecuted[interaction.ApplicationCommandData().Name]; ok {
 			function(session, interaction)
 		} // 해당 인터렉션이 있을 때 그에 맞는 함수 실행(./slashCommand.go)
 	})
+	var err error = nil
 	err = session.Open()
 	makeSlashCommands(session)
 	LastNumbers[NoticePageAll] = Conf.LastNotice.All
