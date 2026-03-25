@@ -2,11 +2,11 @@ package bot
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	. "github.com/csnewcs/gachonnoticebot/config"
 	. "github.com/csnewcs/gachonnoticebot/crolling"
-
 )
 
 var session *discordgo.Session
@@ -54,6 +54,8 @@ func SendNotice(notice Notice, noticePage NoticePage) {
 				Text: notice.Date + " | " + notice.Auther + " " + fileExist,
 			},
 		}
+		now := time.Now()
+		fmt.Printf("[%d-%d-%d %d:%d:%d] INF: New notice {%s} detected. send to '{%s}' channel\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), notice.Title, channel)
 		go session.ChannelMessageSendEmbed(channel, &embed)
 	}
 }

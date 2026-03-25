@@ -38,7 +38,6 @@ func GetNoticeList(noticePage NoticePage) []Notice {
 		// panic(err)
 		now := time.Now()
 		fmt.Printf("[%d-%d-%d %d:%d:%d] ERR: HTTP GET FAILED\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
-		resp.Body.Close()
 		return make([]Notice, 0)
 	}
 	defer resp.Body.Close()
@@ -52,7 +51,16 @@ func parsingNoticeList(page io.Reader, noticePage NoticePage) []Notice {
 	notices := make([]Notice, 0)
 	html, _ := goquery.NewDocumentFromReader(page)
 	table := html.Find("table.board-table")
+	now := time.Now()
+	if table == nil {
+		fmt.Printf("[%d-%d-%d %d:%d:%d] ERR: INVALID HTML(table.board-table nil)\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+		return notices
+	}
 	tbody := table.Find("tbody")
+	if tbody == nil {
+		fmt.Printf("[%d-%d-%d %d:%d:%d] ERR: INVALID HTML(table.board-table.tbody nil)\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+		return notices
+	}
 	tbody.Find("tr").Each(func(i int, sel *goquery.Selection) {
 		link, contentLink := getNoticeLinks[noticePage](sel)
 		num, _ := strconv.Atoi(removeVoidText(sel.Find("td.td-num").Text()))
