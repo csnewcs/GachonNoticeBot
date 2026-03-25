@@ -38,7 +38,6 @@ func GetNoticeList(noticePage NoticePage) []Notice {
 		// panic(err)
 		now := time.Now()
 		fmt.Printf("[%d-%d-%d %d:%d:%d] ERR: HTTP GET FAILED\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
-		resp.Body.Close()
 		return make([]Notice, 0)
 	}
 	defer resp.Body.Close()
